@@ -21,6 +21,7 @@ class Hero extends Phaser.Physics.Arcade.Sprite {
             swing: new SwingState(),
             dash: new DashState(),
             hurt: new HurtState(),
+            circle: new CircleState()
         }, [scene, this])   // pass these as arguments to maintain scene/object context in the FSM
     }
 }
@@ -37,6 +38,7 @@ class IdleState extends State {
         // use destructuring to make a local copy of the keyboard object
         const { left, right, up, down, space, shift } = scene.keys
         const HKey = scene.keys.HKey
+        const FKey = scene.keys.FKey
 
         // transition to swing if pressing space
         if(Phaser.Input.Keyboard.JustDown(space)) {
@@ -56,6 +58,12 @@ class IdleState extends State {
             return
         }
 
+        // spin if fkey
+        if(Phaser.Input.Keyboard.JustDown(FKey)) {
+            this.stateMachine.transition('circle')
+            return
+        }
+
         // transition to move if pressing a movement key
         if(left.isDown || right.isDown || up.isDown || down.isDown ) {
             this.stateMachine.transition('move')
@@ -69,6 +77,7 @@ class MoveState extends State {
         // use destructuring to make a local copy of the keyboard object
         const { left, right, up, down, space, shift } = scene.keys
         const HKey = scene.keys.HKey
+        const FKey = scene.keys.FKey
 
         // transition to swing if pressing space
         if(Phaser.Input.Keyboard.JustDown(space)) {
@@ -91,6 +100,12 @@ class MoveState extends State {
         // transition to idle if not pressing movement keys
         if(!(left.isDown || right.isDown || up.isDown || down.isDown)) {
             this.stateMachine.transition('idle')
+            return
+        }
+
+        // spin if fkey
+        if(Phaser.Input.Keyboard.JustDown(FKey)) {
+            this.stateMachine.transition('circle')
             return
         }
 
@@ -180,6 +195,15 @@ class HurtState extends State {
         // set recovery timer
         scene.time.delayedCall(hero.hurtTimer, () => {
             hero.clearTint()
+            this.stateMachine.transition('idle')
+        })
+    }
+}
+
+class CircleState extends State{
+    enter(scene, hero){
+        hero.body.setVelocity(0)
+        hero.anims.play('circularAttack').once('animationcomplete', ()=>{
             this.stateMachine.transition('idle')
         })
     }
